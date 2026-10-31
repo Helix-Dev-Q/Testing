@@ -1,0 +1,60 @@
+name: Update builds
+
+on:
+  # cron-job.org starts this every 5 minutes, because GitHub's own schedule never fired here.
+  workflow_dispatch:
+    inputs:
+      walk_history:
+        description: Open every older build to find the ones behind it
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-builds
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Look for new builds
+        env:
+          XBOX_REFRESH_TOKEN: ${{ secrets.XBOX_REFRESH_TOKEN }}
+          XBOX_TOKEN_OUT: ${{ runner.temp }}/xbox_token
+          WALK_HISTORY: ${{ inputs.walk_history && '--walk-history' || '' }}
+        run: |
+          # The first run after 05:00 UTC on Monday also re-checks every CDN link.
+          LINK_CHECK=""
+          if [ "$(date -u +%u%H)" = "105" ] && [ "$(date -u +%M)" -lt 5 ]; then
+            LINK_CHECK="--check-links"
+          fi
+          python3 scripts/update.py $LINK_CHECK $WALK_HISTORY
+
+      - name: Commit changes
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Update builds"
+            git push
+          fi
+
+      # Sign-in tokens expire, so each run stores the fresh one it was given.
+      - name: Save the new sign-in token
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.SECRETS_PAT }}
+        run: |
+          token_file="$RUNNER_TEMP/xbox_token"
+          if [ -n "$GH_TOKEN" ] && [ -s "$token_file" ]; then
+            gh secret set XBOX_REFRESH_TOKEN --repo "$GITHUB_REPOSITORY" < "$token_file"
+          fi
+          rm -f "$token_file"
