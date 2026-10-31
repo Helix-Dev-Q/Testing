@@ -46,7 +46,6 @@ SERIES_LOOKUP_HEADERS = {
     "User-Agent": xbl.USER_AGENT,
     "Accept": "application/json",
 }
-SERIES_RETRY_DAYS = 2
 
 FN_RELEASES_SEASON = re.compile(r"^# Season (\d+)", re.M)
 FN_RELEASES_BUILD = re.compile(r"^\|\s*(\S+-CL-(\d+))\s*\|", re.M)
@@ -256,17 +255,12 @@ def collect_builds(db, token, names, walk=False):
         raise xbl.AuthError("The package API refused every package for this account.")
 
 
-def series_lookup_due(db, newest_before, now):
-    """Allows three lookups per build: when it appears, then once a day for two days."""
+def series_lookup_due(db, newest_before, now, requested=False):
+    """Allows one lookup when a build appears, then one a day until the newest row has a link."""
     newest = max(db["builds"], key=lambda build: build["cl"])
     if "xbox_series" in newest["packages"]:
         return False
-    if newest["cl"] != newest_before:
-        return True
-    if not newest["date"] or now.hour != 0 or now.minute >= 5:
-        return False
-    age = (now.date() - datetime.date.fromisoformat(newest["date"])).days
-    return 0 < age <= SERIES_RETRY_DAYS
+    return requested or newest["cl"] != newest_before or (now.hour == 0 and now.minute < 5)
 
 
 def fetch_series_link(db, names):
@@ -325,6 +319,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check-links", action="store_true", help="also re-check every CDN link")
     parser.add_argument("--walk-history", action="store_true", help="open every older build to find the ones behind it")
+    parser.add_argument("--series-lookup", action="store_true", help="look up the newest Series link now if it's missing")
     args = parser.parse_args()
 
     db = render.read_readme()
@@ -345,7 +340,7 @@ def main():
     else:
         print("::warning::No sign-in saved, so only public data was updated. Run scripts/signin.py.")
 
-    if series_lookup_due(db, newest_before, datetime.datetime.now(datetime.timezone.utc)):
+    if series_lookup_due(db, newest_before, datetime.datetime.now(datetime.timezone.utc), args.series_lookup):
         fetch_series_link(db, names)
 
     rename_inferred(db, names)

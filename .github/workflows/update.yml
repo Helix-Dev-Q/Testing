@@ -8,6 +8,10 @@ on:
         description: Open every older build to find the ones behind it
         type: boolean
         default: false
+      series_lookup:
+        description: Look up the newest Xbox Series link now if its row has none
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -28,13 +32,14 @@ jobs:
           XBOX_REFRESH_TOKEN: ${{ secrets.XBOX_REFRESH_TOKEN }}
           XBOX_TOKEN_OUT: ${{ runner.temp }}/xbox_token
           WALK_HISTORY: ${{ inputs.walk_history && '--walk-history' || '' }}
+          SERIES_LOOKUP: ${{ inputs.series_lookup && '--series-lookup' || '' }}
         run: |
           # The first run after 05:00 UTC on Monday also re-checks every CDN link.
           LINK_CHECK=""
           if [ "$(date -u +%u%H)" = "105" ] && [ "$(date -u +%M)" -lt 5 ]; then
             LINK_CHECK="--check-links"
           fi
-          python3 scripts/update.py $LINK_CHECK $WALK_HISTORY
+          python3 scripts/update.py $LINK_CHECK $WALK_HISTORY $SERIES_LOOKUP
 
       - name: Commit changes
         if: always()
