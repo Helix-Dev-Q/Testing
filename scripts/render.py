@@ -47,6 +47,7 @@ CREDITS = """\
 - Build history up to 42.30 comes from Xader726's \
 [FortniteXboxBuilds](https://github.com/Xader726/FortniteXboxBuilds) and \
 [xboxlinkcollection](https://github.com/Xader726/xboxlinkcollection).
+- Newer Xbox Series links come from [XboxDownload](https://github.com/skydevil88/XboxDownload).
 - Version names and the README layout come from \
 [polynite/fn-releases](https://github.com/polynite/fn-releases).
 """

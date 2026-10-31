@@ -37,6 +37,17 @@ CONTENT_IDS = {
 WALK_DELAY_SECONDS = 0.25
 MAX_WALK_LOOKUPS = 1000
 
+# Xbox won't give this login Series files, so these come from XboxDownload's lookup, with its
+# developer's permission. The user agent still names this project.
+SERIES_LOOKUP_URL = "https://xbox.skydevil.xyz/Game/GetGamePackage?contentId={content_id}&platform=1&size={size}"
+SERIES_LOOKUP_HEADERS = {
+    "X-Organization": "XboxDownload",
+    "X-Author": "Devil",
+    "User-Agent": xbl.USER_AGENT,
+    "Accept": "application/json",
+}
+SERIES_RETRY_DAYS = 2
+
 FN_RELEASES_SEASON = re.compile(r"^# Season (\d+)", re.M)
 FN_RELEASES_BUILD = re.compile(r"^\|\s*(\S+-CL-(\d+))\s*\|", re.M)
 
@@ -245,6 +256,50 @@ def collect_builds(db, token, names, walk=False):
         raise xbl.AuthError("The package API refused every package for this account.")
 
 
+def series_lookup_due(db, newest_before, now):
+    """Allows three lookups per build: when it appears, then once a day for two days."""
+    newest = max(db["builds"], key=lambda build: build["cl"])
+    if "xbox_series" in newest["packages"]:
+        return False
+    if newest["cl"] != newest_before:
+        return True
+    if not newest["date"] or now.hour != 0 or now.minute >= 5:
+        return False
+    age = (now.date() - datetime.date.fromisoformat(newest["date"])).days
+    return 0 < age <= SERIES_RETRY_DAYS
+
+
+def fetch_series_link(db, names):
+    """Adds the newest Series link from XboxDownload, once the real CDN confirms it."""
+    size = db["live"].get("store_sizes", {}).get("xbox_series")
+    if not size:
+        return False
+    url = SERIES_LOOKUP_URL.format(content_id=CONTENT_IDS["Xbox"], size=size)
+    request = urllib.request.Request(url, headers=SERIES_LOOKUP_HEADERS)
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            answer = json.load(response)
+    except (OSError, ValueError) as error:
+        print(f"::warning::Series lookup failed: {error}")
+        return False
+
+    link = (answer.get("data") or {}).get("url") if str(answer.get("code")) == "200" else None
+    if not link:
+        print("Series lookup: no link available yet.")
+        return False
+    parts = link.split("/")
+    file_name = parts[-1]
+    parsed = render.parse_file_name(file_name)
+    expected = len(parts) > 6 and parts[2] == "assets1.xboxlive.com" and parts[5] == CONTENT_IDS["Xbox"]
+    if not expected or not parsed or parsed[0] != "xbox_series" or not parsed[1]:
+        print(f"::warning::Series lookup returned an unexpected link: {file_name}")
+        return False
+    if head(link)[0] != 200:
+        print(f"::warning::Series lookup link isn't on the CDN: {file_name}")
+        return False
+    return add_package(db, file_name, None, link, names)
+
+
 def save_rotated_token(token):
     target = os.environ.get("XBOX_TOKEN_OUT") or (TOKEN_FILE if TOKEN_FILE.exists() else None)
     if token and target:
@@ -275,6 +330,7 @@ def main():
     db = render.read_readme()
     db["live"] = db["live"] | fetch_live()
     names = fetch_known_names()
+    newest_before = max(build["cl"] for build in db["builds"])
     failed = False
 
     token = load_token()
@@ -288,6 +344,9 @@ def main():
             print(f"::warning::Couldn't reach Xbox Live, will try again next run: {error}")
     else:
         print("::warning::No sign-in saved, so only public data was updated. Run scripts/signin.py.")
+
+    if series_lookup_due(db, newest_before, datetime.datetime.now(datetime.timezone.utc)):
+        fetch_series_link(db, names)
 
     rename_inferred(db, names)
     if args.check_links:
