@@ -256,11 +256,11 @@ def collect_builds(db, token, names, walk=False):
 
 
 def series_lookup_due(db, newest_before, now, requested=False):
-    """Allows one lookup when a build appears, then one a day until the newest row has a link."""
+    """Allows one lookup when a build appears, then one an hour until the newest row has a link."""
     newest = max(db["builds"], key=lambda build: build["cl"])
     if "xbox_series" in newest["packages"]:
         return False
-    return requested or newest["cl"] != newest_before or (now.hour == 0 and now.minute < 5)
+    return requested or newest["cl"] != newest_before or now.minute < 5
 
 
 def fetch_series_link(db, names):
@@ -291,7 +291,10 @@ def fetch_series_link(db, names):
     if head(link)[0] != 200:
         print(f"::warning::Series lookup link isn't on the CDN: {file_name}")
         return False
-    return add_package(db, file_name, None, link, names)
+    added = add_package(db, file_name, None, link, names)
+    if not added:
+        print(f"Series lookup: still on {file_name}.")
+    return added
 
 
 def save_rotated_token(token):
