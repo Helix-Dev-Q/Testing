@@ -8,7 +8,7 @@ If something is wrong or missing, open an issue or pull request.
 > These are encrypted `.xvc` and `.msixvc` packages. They aren't playable builds you can run on a normal PC.
 
 ## Live now
-- **Game version:** 42.40 (server CL 59332036)
+- **Game version:** 43.00 (server CL 59846285)
 - **Store download size:** Xbox One 69.3 GB, Xbox Series 95.0 GB, PC 52.5 GB
 
 ## Info
