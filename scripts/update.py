@@ -160,6 +160,15 @@ def new_build(cl, names, db):
     }
 
 
+def find_build(db, platform, cl):
+    """Finds the row for a link. A row's PC link can have a different changelist from the row."""
+    for build in db["builds"]:
+        package = build["packages"].get(platform)
+        if build["cl"] == cl or (package and render.link_changelist(package) == cl):
+            return build
+    return None
+
+
 def add_package(db, file_name, size, url, names):
     """Adds one CDN file to the list. Returns True if it was new."""
     parsed = render.parse_file_name(file_name)
@@ -168,7 +177,7 @@ def add_package(db, file_name, size, url, names):
         return False
     platform, cl = parsed
 
-    build = next((build for build in db["builds"] if build["cl"] == cl), None)
+    build = find_build(db, platform, cl)
     if build and build["packages"].get(platform, {}).get("url") == url:
         return False
     if not build:

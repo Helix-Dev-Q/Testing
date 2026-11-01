@@ -34,8 +34,8 @@ a normal PC.
 LEGEND = """\
 ## Info
 - **Xbox Version / PC Version:** Game version and changelist, with the changelist read from that \
-row's Xbox or PC link. `*` means the game version was worked out from neighbouring builds and may \
-be slightly off.
+row's Xbox or PC link. The two differ when Xbox and PC got separate builds of the same update. `*` \
+means the game version was worked out from neighbouring builds and may be slightly off.
 - **Date:** When the package was uploaded, or the date from the original list. Blank if unknown.
 - **Xbox One / Xbox Series / PC:** CDN link, labelled with the file size. `removed` means the \
 link returned an error at the last check. Xbox's API currently only gives out the Xbox One and \
@@ -88,17 +88,23 @@ def parse_file_name(name):
     return platform, int(f"{high}{low:04d}") if high else None
 
 
+def link_changelist(package):
+    """Returns the changelist in a link's file name, or None if it doesn't have one."""
+    parsed = parse_file_name(package["url"].rsplit("/", 1)[1])
+    return parsed[1] if parsed else None
+
+
 def version_cell(build, platforms):
     """Shows a build like 42.40-CL-59343437, taking the changelist from that platform's link."""
     packages = [build["packages"][key] for key in platforms if key in build["packages"]]
     if not packages:
         return ""
     marker = " *" if build.get("inferred") else ""
-    parsed = parse_file_name(packages[0]["url"].rsplit("/", 1)[1])
-    if not parsed or not parsed[1]:
+    changelist = link_changelist(packages[0])
+    if not changelist:
         return build["build"] + marker
     version = build["build"].rsplit("-CL-", 1)[0]
-    return f"{version}-CL-{parsed[1]}{marker}"
+    return f"{version}-CL-{changelist}{marker}"
 
 
 def build_row(build):
