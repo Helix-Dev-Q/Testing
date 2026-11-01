@@ -19,7 +19,7 @@ If something is wrong or missing, open an issue or pull request.
 # Season 43
 | Xbox Version | PC Version | Date | Xbox One | Xbox Series | PC | Notes |
 |---|---|---|---|---|---|---|
-| 43.00-CL-59596594 | 43.00-CL-59596594 | 2026-10-23 | [69.3 GB](http://assets1.xboxlive.com/6/ce5754f8-3691-4885-8786-784035c67b79/4a617fcb-3c09-4ac5-9c4c-dc46b5263876/1.0.5959.6594.bf1b5cde-dd6f-4174-8f7d-fcf9a91f815d/436609B6.FortniteClient_1.0.5959.6594_neutral__9ncxwbgmmv7m8_x.xvc) |  | [52.5 GB](http://assets1.xboxlive.com/8/31c02a96-b5e7-41ea-955c-09acf0319ae9/21b40136-2fdb-404b-be34-4656e6a88528/1.5959.6594.0.f204cc2c-ec20-4b24-805b-01bbd148f248/436609B6.FortniteClient_1.5959.6594.0_x64__9ncxwbgmmv7m8.msixvc) |  |
+| 43.00-CL-59596594 | 43.00-CL-59596594 | 2026-10-23 | [69.3 GB](http://assets1.xboxlive.com/6/ce5754f8-3691-4885-8786-784035c67b79/4a617fcb-3c09-4ac5-9c4c-dc46b5263876/1.0.5959.6594.bf1b5cde-dd6f-4174-8f7d-fcf9a91f815d/436609B6.FortniteClient_1.0.5959.6594_neutral__9ncxwbgmmv7m8_x.xvc) | [95.0 GB](http://assets1.xboxlive.com/4/c5500bb8-2334-4d86-b4b5-7527dd56443d/4a617fcb-3c09-4ac5-9c4c-dc46b5263876/2.0.5959.6594.fa95f4db-953f-44a5-83a7-ea495bbcd86f/436609B6.FortniteClient_2.0.5959.6594_neutral__9ncxwbgmmv7m8_xs.xvc) | [52.5 GB](http://assets1.xboxlive.com/8/31c02a96-b5e7-41ea-955c-09acf0319ae9/21b40136-2fdb-404b-be34-4656e6a88528/1.5959.6594.0.f204cc2c-ec20-4b24-805b-01bbd148f248/436609B6.FortniteClient_1.5959.6594.0_x64__9ncxwbgmmv7m8.msixvc) |  |
 
 # Season 42
 | Xbox Version | PC Version | Date | Xbox One | Xbox Series | PC | Notes |
